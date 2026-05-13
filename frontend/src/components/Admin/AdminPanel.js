@@ -198,6 +198,8 @@ const MAIN_TABS = [
   { key: 'data', label: 'Импорт / Экспорт' },
 ];
 
+const PAGE_SIZE = 10;
+
 function createInitialState(fields) {
   return fields.reduce((acc, field) => ({
     ...acc,
@@ -347,7 +349,8 @@ export default function AdminPanel() {
 
   const [selectedEntity, setSelectedEntity] = useState('students');
   const [filters, setFilters] = useState(() => createInitialState(ENTITY_CONFIG.students.filters));
-  const [rows, setRows] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageData, setPageData] = useState({ rows: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 1 });
   const [rowsLoading, setRowsLoading] = useState(false);
   const [rowsError, setRowsError] = useState('');
 
@@ -408,16 +411,22 @@ export default function AdminPanel() {
     };
   }, []);
 
-  const loadRows = async (entity = selectedEntity, queryFilters = filters) => {
+  const loadRows = async (entity = selectedEntity, queryFilters = filters, pageNum = page) => {
     setRowsLoading(true);
     setRowsError('');
     try {
-      const query = buildQuery(queryFilters);
+      const query = buildQuery({ ...queryFilters, page: pageNum, pageSize: PAGE_SIZE });
       const response = await apiFetch(`/admin/entities/${entity}${query}`);
-      setRows(response.rows);
+      setPageData({
+        rows: response.rows || [],
+        total: response.total || 0,
+        page: response.page || 1,
+        pageSize: response.pageSize || PAGE_SIZE,
+        totalPages: response.totalPages || 1,
+      });
     } catch (error) {
       setRowsError(error.message);
-      setRows([]);
+      setPageData({ rows: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 1 });
     } finally {
       setRowsLoading(false);
     }
@@ -427,23 +436,23 @@ export default function AdminPanel() {
     const nextFilters = createInitialState(entityConfig.filters);
     setFilters(nextFilters);
     setCreateValues(createInitialState(entityConfig.createFields));
-    setRows([]);
+    setPage(1);
     setRowsError('');
     setCreateStatus(null);
     setSelectedSkillToAdd('');
     setSelectedDirectionToAdd('');
     if (activeTab === 'browser') {
-      loadRows(selectedEntity, nextFilters);
+      loadRows(selectedEntity, nextFilters, 1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityConfig]);
 
   useEffect(() => {
     if (activeTab === 'browser') {
-      loadRows(selectedEntity, filters);
+      loadRows(selectedEntity, filters, page);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, selectedEntity]);
+  }, [activeTab, selectedEntity, page]);
 
   const handleFilterChange = (fieldName, value) => {
     setFilters((prev) => ({ ...prev, [fieldName]: value }));
@@ -479,7 +488,13 @@ export default function AdminPanel() {
   const resetFilters = () => {
     const nextFilters = createInitialState(entityConfig.filters);
     setFilters(nextFilters);
-    loadRows(selectedEntity, nextFilters);
+    setPage(1);
+    loadRows(selectedEntity, nextFilters, 1);
+  };
+
+  const handleApplyFilters = () => {
+    setPage(1);
+    loadRows(selectedEntity, filters, 1);
   };
 
   const handleCreateSubmit = async (event) => {
@@ -496,7 +511,7 @@ export default function AdminPanel() {
       setCreateValues(createInitialState(entityConfig.createFields));
       setSelectedSkillToAdd('');
       setSelectedDirectionToAdd('');
-      await loadRows(selectedEntity, filters);
+      await loadRows(selectedEntity, filters, page);
     } catch (error) {
       setCreateStatus({ type: 'error', message: error.message });
     } finally {
@@ -548,7 +563,7 @@ export default function AdminPanel() {
       setImportStatus({ type: 'success', message: `${response.message}. ${counts}` });
       setImportPayload('');
       if (activeTab === 'browser') {
-        await loadRows(selectedEntity, filters);
+        await loadRows(selectedEntity, filters, page);
       }
     } catch (error) {
       setImportStatus({ type: 'error', message: error.message });
@@ -701,7 +716,7 @@ export default function AdminPanel() {
                   ))}
                 </select>
               </label>
-              <button type="button" className="details-btn entity-refresh-btn" onClick={() => loadRows(selectedEntity, filters)}>
+              <button type="button" className="details-btn entity-refresh-btn" onClick={() => loadRows(selectedEntity, filters, page)}>
                 Обновить таблицу
               </button>
             </div>
@@ -723,7 +738,7 @@ export default function AdminPanel() {
                 ))}
               </div>
               <div className="form-actions">
-                <button type="button" className="auth-btn" onClick={() => loadRows(selectedEntity, filters)}>Применить фильтры</button>
+                <button type="button" className="auth-btn" onClick={handleApplyFilters}>Применить фильтры</button>
                 <button type="button" className="secondary-btn" onClick={resetFilters}>Сбросить</button>
               </div>
             </div>
@@ -751,41 +766,54 @@ export default function AdminPanel() {
           <div className="admin-card admin-table-card">
             <div className="section-header compact-header">
               <h4>Таблица: {entityConfig.label}</h4>
-              <span className="vacancies-count">Записей: {rows.length}</span>
+              <span className="vacancies-count">
+                Всего: {pageData.total} • Страница {pageData.page}/{pageData.totalPages}
+              </span>
             </div>
 
             {rowsLoading ? (
               <p>Загрузка таблицы...</p>
             ) : rowsError ? (
               <div className="import-status error">❌ {rowsError}</div>
-            ) : rows.length === 0 ? (
+            ) : pageData.rows.length === 0 ? (
               <p>По выбранным фильтрам записи не найдены.</p>
             ) : (
-              <div className="admin-table-wrapper">
-                <table className="results-table admin-db-table">
-                  <thead>
-                    <tr>
-                      {entityConfig.columns.map((column) => (
-                        <th key={column.key}>{column.label}</th>
-                      ))}
-                      <th>Действия</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, index) => (
-                      <tr key={`${row.id || index}-${index}`}>
+              <>
+                <div className="admin-table-wrapper">
+                  <table className="results-table admin-db-table">
+                    <thead>
+                      <tr>
                         {entityConfig.columns.map((column) => (
-                          <td key={column.key}>{renderCell(row[column.key])}</td>
+                          <th key={column.key}>{column.label}</th>
                         ))}
-                        <td>
-                          <button type="button" className="details-btn" onClick={() => setViewItem(row)} style={{ marginRight: 4 }}>👁</button>
-                          <button type="button" className="details-btn" onClick={() => setEditItem(row)}>✎</button>
-                        </td>
+                        <th>Действия</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {pageData.rows.map((row, index) => (
+                        <tr key={`${row.id || index}-${index}`}>
+                          {entityConfig.columns.map((column) => (
+                            <td key={column.key}>{renderCell(row[column.key])}</td>
+                          ))}
+                          <td>
+                            <button type="button" className="details-btn" onClick={() => setViewItem(row)} style={{ marginRight: 4 }}>👁</button>
+                            <button type="button" className="details-btn" onClick={() => setEditItem(row)}>✎</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="form-actions" style={{ justifyContent: 'center', gap: 8 }}>
+                  <button type="button" className="secondary-btn" onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1}>
+                    ← Назад
+                  </button>
+                  <span style={{ alignSelf: 'center' }}>{pageData.page} / {pageData.totalPages}</span>
+                  <button type="button" className="secondary-btn" onClick={() => setPage(Math.min(pageData.totalPages, page + 1))} disabled={page >= pageData.totalPages}>
+                    Вперед →
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </section>
@@ -865,7 +893,7 @@ export default function AdminPanel() {
           entityType={selectedEntity}
           item={editItem}
           onClose={() => setEditItem(null)}
-          onSaved={() => { setEditItem(null); loadRows(selectedEntity, filters); }}
+          onSaved={() => { setEditItem(null); loadRows(selectedEntity, filters, page); }}
         />
       )}
     </div>
