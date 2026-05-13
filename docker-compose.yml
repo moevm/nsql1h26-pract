@@ -4,9 +4,6 @@ services:
     container_name: lk-partner-db
     environment:
       NEO4J_AUTH: neo4j/password
-    ports:
-      - "7474:7474"
-      - "7687:7687"
     volumes:
       - neo4j_data:/data
     healthcheck:
@@ -29,9 +26,9 @@ services:
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: password
       NEO4J_DATABASE: neo4j
-      JWT_SECRET: super-secret-key
+      JWT_SECRET: super-secret-key-change-me-in-production
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
 volumes:
   neo4j_data:
