@@ -79,18 +79,11 @@ const ENTITY_CONFIG = {
       { name: 'companyName', label: 'Компания', type: 'text' },
       { name: 'category', label: 'Категория', type: 'text' },
       { name: 'workType', label: 'Тип работы', type: 'text' },
-      { name: 'practiceType', label: 'Тип практики', type: 'text' },
       { name: 'employmentType', label: 'Занятость', type: 'text' },
       { name: 'workFormat', label: 'Формат работы', type: 'text' },
-      { name: 'address', label: 'Адрес', type: 'text' },
       { name: 'skill', label: 'Навык', type: 'text' },
-      { name: 'direction', label: 'Направление подготовки', type: 'text' },
       { name: 'salaryFrom', label: 'Зарплата от', type: 'number' },
       { name: 'salaryTo', label: 'Зарплата до', type: 'number' },
-      { name: 'capacityFrom', label: 'Мест от', type: 'number' },
-      { name: 'capacityTo', label: 'Мест до', type: 'number' },
-      { name: 'postedDateFrom', label: 'Дата публикации от', type: 'date' },
-      { name: 'postedDateTo', label: 'Дата публикации до', type: 'date' },
     ],
     columns: [
       { key: 'id', label: 'ID' },
@@ -99,18 +92,12 @@ const ENTITY_CONFIG = {
       { key: 'companyName', label: 'Компания' },
       { key: 'category', label: 'Категория' },
       { key: 'workType', label: 'Тип работы' },
-      { key: 'practiceType', label: 'Тип практики' },
       { key: 'employmentType', label: 'Занятость' },
       { key: 'workFormat', label: 'Формат' },
       { key: 'capacity', label: 'Мест' },
       { key: 'salary', label: 'Зарплата' },
       { key: 'postedDate', label: 'Дата' },
       { key: 'skills', label: 'Навыки' },
-      { key: 'directions', label: 'Направления' },
-      { key: 'address', label: 'Адрес' },
-      { key: 'requirements', label: 'Требования' },
-      { key: 'responsibilities', label: 'Обязанности' },
-      { key: 'conditions', label: 'Условия' },
     ],
     createFields: [
       { name: 'id', label: 'ID', type: 'text', placeholder: 'Можно оставить пустым' },
@@ -125,8 +112,8 @@ const ENTITY_CONFIG = {
       { name: 'salary', label: 'Зарплата', type: 'number' },
       { name: 'postedDate', label: 'Дата публикации', type: 'date' },
       { name: 'address', label: 'Адрес', type: 'text' },
-      { name: 'skills', label: 'Навыки', type: 'skill-multiselect', initialValue: [] },
-      { name: 'directions', label: 'Направления', type: 'direction-multiselect', initialValue: [] },
+      { name: 'skills', label: 'Навыки (через запятую)', type: 'text', placeholder: 'React, SQL' },
+      { name: 'directions', label: 'Направления (через запятую)', type: 'text' },
       { name: 'requirements', label: 'Требования', type: 'textarea' },
       { name: 'responsibilities', label: 'Обязанности', type: 'textarea' },
       { name: 'conditions', label: 'Условия', type: 'textarea' },
@@ -137,10 +124,6 @@ const ENTITY_CONFIG = {
     filters: [
       { name: 'id', label: 'ID', type: 'text' },
       { name: 'name', label: 'Название', type: 'text' },
-      { name: 'studentsFrom', label: 'Студентов от', type: 'number' },
-      { name: 'studentsTo', label: 'Студентов до', type: 'number' },
-      { name: 'vacanciesFrom', label: 'Вакансий от', type: 'number' },
-      { name: 'vacanciesTo', label: 'Вакансий до', type: 'number' },
     ],
     columns: [
       { key: 'id', label: 'ID' },
@@ -157,26 +140,14 @@ const ENTITY_CONFIG = {
     label: 'Отклики',
     filters: [
       { name: 'id', label: 'ID', type: 'text' },
-      { name: 'studentId', label: 'ID студента', type: 'text' },
       { name: 'studentName', label: 'Имя студента', type: 'text' },
-      { name: 'studentEmail', label: 'Email студента', type: 'text' },
-      { name: 'studentCategory', label: 'Категория', type: 'text' },
-      { name: 'offerId', label: 'ID вакансии', type: 'text' },
       { name: 'vacancyTitle', label: 'Название вакансии', type: 'text' },
       { name: 'companyName', label: 'Компания', type: 'text' },
       { name: 'status', label: 'Статус', type: 'text' },
-      { name: 'createdAtFrom', label: 'Дата отклика от', type: 'datetime-local' },
-      { name: 'createdAtTo', label: 'Дата отклика до', type: 'datetime-local' },
-      { name: 'matchDistanceFrom', label: 'Совпадение от', type: 'number' },
-      { name: 'matchDistanceTo', label: 'Совпадение до', type: 'number' },
     ],
     columns: [
       { key: 'id', label: 'ID' },
-      { key: 'studentId', label: 'ID студента' },
       { key: 'studentName', label: 'Студент' },
-      { key: 'studentEmail', label: 'Email' },
-      { key: 'studentCategory', label: 'Категория' },
-      { key: 'offerId', label: 'ID вакансии' },
       { key: 'vacancyTitle', label: 'Вакансия' },
       { key: 'companyName', label: 'Компания' },
       { key: 'status', label: 'Статус' },
@@ -497,6 +468,16 @@ export default function AdminPanel() {
     loadRows(selectedEntity, filters, 1);
   };
 
+  const handleDelete = async (row) => {
+    if (!window.confirm(`Удалить запись ${row.id}?`)) return;
+    try {
+      await apiFetch(`/admin/entities/${selectedEntity}/${encodeURIComponent(row.id)}`, { method: 'DELETE' });
+      await loadRows(selectedEntity, filters, page);
+    } catch (error) {
+      window.alert(error.message);
+    }
+  };
+
   const handleCreateSubmit = async (event) => {
     event.preventDefault();
     setCreateLoading(true);
@@ -797,7 +778,8 @@ export default function AdminPanel() {
                           ))}
                           <td>
                             <button type="button" className="details-btn" onClick={() => setViewItem(row)} style={{ marginRight: 4 }}>👁</button>
-                            <button type="button" className="details-btn" onClick={() => setEditItem(row)}>✎</button>
+                            <button type="button" className="details-btn" onClick={() => setEditItem(row)} style={{ marginRight: 4 }}>✎</button>
+                            <button type="button" className="delete-vacancy-btn" onClick={() => handleDelete(row)}>✕</button>
                           </td>
                         </tr>
                       ))}
