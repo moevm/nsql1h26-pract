@@ -195,8 +195,7 @@ const ENTITY_CONFIG = {
 
 const MAIN_TABS = [
   { key: 'browser', label: 'Просмотр БД' },
-  { key: 'import', label: 'Импорт' },
-  { key: 'export', label: 'Экспорт' },
+  { key: 'data', label: 'Импорт / Экспорт' },
 ];
 
 function createInitialState(fields) {
@@ -256,15 +255,11 @@ export default function AdminPanel() {
   const [selectedSkillToAdd, setSelectedSkillToAdd] = useState('');
   const [selectedDirectionToAdd, setSelectedDirectionToAdd] = useState('');
 
-  const [exportEntity, setExportEntity] = useState('students');
-  const [exportFormat, setExportFormat] = useState('json');
   const [exportContent, setExportContent] = useState('');
   const [exportFilename, setExportFilename] = useState('');
   const [exportStatus, setExportStatus] = useState(null);
   const [exportLoading, setExportLoading] = useState(false);
 
-  const [importEntity, setImportEntity] = useState('students');
-  const [importFormat, setImportFormat] = useState('json');
   const [importPayload, setImportPayload] = useState('');
   const [importStatus, setImportStatus] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
@@ -399,14 +394,15 @@ export default function AdminPanel() {
     }
   };
 
-  const handleExport = async () => {
+  const handleExportAll = async () => {
     setExportLoading(true);
     setExportStatus(null);
     try {
-      const response = await apiFetch(`/admin/export/${exportEntity}?format=${exportFormat}`);
+      const response = await apiFetch('/admin/export-all');
       setExportContent(response.content);
       setExportFilename(response.filename);
-      setExportStatus({ type: 'success', message: `Экспортировано записей: ${response.count}` });
+      const counts = Object.entries(response.counts || {}).map(([k, v]) => `${k}: ${v}`).join(', ');
+      setExportStatus({ type: 'success', message: `Экспорт готов (${counts})` });
     } catch (error) {
       setExportStatus({ type: 'error', message: error.message });
       setExportContent('');
@@ -420,8 +416,7 @@ export default function AdminPanel() {
     if (!exportContent || !exportFilename) {
       return;
     }
-
-    const blob = new Blob([exportContent], { type: exportFormat === 'json' ? 'application/json' : 'text/csv;charset=utf-8;' });
+    const blob = new Blob([exportContent], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -430,22 +425,19 @@ export default function AdminPanel() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = async (event) => {
+  const handleImportAll = async (event) => {
     event.preventDefault();
     setImportLoading(true);
     setImportStatus(null);
     try {
-      const response = await apiFetch('/admin/import', {
+      const response = await apiFetch('/admin/import-all', {
         method: 'POST',
-        body: JSON.stringify({
-          entityType: importEntity,
-          format: importFormat,
-          payload: importPayload,
-        }),
+        body: JSON.stringify({ payload: importPayload }),
       });
-      setImportStatus({ type: 'success', message: response.message });
+      const counts = Object.entries(response.counts || {}).map(([k, v]) => `${k}: ${v}`).join(', ');
+      setImportStatus({ type: 'success', message: `${response.message}. ${counts}` });
       setImportPayload('');
-      if (activeTab === 'browser' && selectedEntity === importEntity) {
+      if (activeTab === 'browser') {
         await loadRows(selectedEntity, filters);
       }
     } catch (error) {
@@ -453,6 +445,13 @@ export default function AdminPanel() {
     } finally {
       setImportLoading(false);
     }
+  };
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    setImportPayload(text);
   };
 
   const renderMultiSelectField = (field) => {
@@ -558,8 +557,7 @@ export default function AdminPanel() {
       <div className="admin-header-block">
         <h1>Админ-панель</h1>
         <p>
-          Здесь можно просматривать содержимое базы данных в виде таблиц, применять многокритериальные фильтры,
-          добавлять записи по каждому типу данных и выполнять импорт/экспорт.
+          Просмотр содержимого базы данных, добавление записей по каждому типу данных и единый импорт/экспорт всех данных приложения.
         </p>
       </div>
 
@@ -678,103 +676,64 @@ export default function AdminPanel() {
         </section>
       )}
 
-      {activeTab === 'import' && (
+      {activeTab === 'data' && (
         <section className="admin-section admin-card">
           <div className="section-header compact-header">
-            <h3>Импорт данных</h3>
+            <h3>Экспорт всех данных</h3>
           </div>
-          <form onSubmit={handleImport}>
-            <div className="admin-form-grid compact-top-grid">
-              <label className="form-group compact-group">
-                <span>Тип данных</span>
-                <select value={importEntity} onChange={(event) => setImportEntity(event.target.value)}>
-                  {Object.entries(ENTITY_CONFIG).map(([entityKey, config]) => (
-                    <option key={entityKey} value={entityKey}>{config.label}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-group compact-group">
-                <span>Формат</span>
-                <select value={importFormat} onChange={(event) => setImportFormat(event.target.value)}>
-                  <option value="json">JSON</option>
-                  <option value="csv">CSV</option>
-                </select>
-              </label>
+          <p>Одна кнопка выгружает все данные приложения в JSON-файл.</p>
+          <div className="form-actions">
+            <button type="button" className="auth-btn" onClick={handleExportAll} disabled={exportLoading}>
+              {exportLoading ? 'Экспорт...' : 'Экспортировать все данные'}
+            </button>
+            <button type="button" className="secondary-btn" onClick={downloadExport} disabled={!exportContent}>
+              Скачать файл
+            </button>
+          </div>
+          {exportStatus && (
+            <div className={`import-status ${exportStatus.type === 'error' ? 'error' : 'success'}`}>
+              {exportStatus.type === 'error' ? '❌' : '✅'} {exportStatus.message}
             </div>
-
+          )}
+          {exportContent && (
             <label className="form-group compact-group">
-              <span>Данные для импорта</span>
+              <span>Содержимое экспорта ({exportFilename})</span>
+              <textarea rows={12} value={exportContent} readOnly />
+            </label>
+          )}
+
+          <hr style={{ margin: '24px 0' }} />
+
+          <div className="section-header compact-header">
+            <h3>Импорт всех данных</h3>
+          </div>
+          <p>Одна кнопка загружает все данные приложения из JSON-дампа (формат — результат экспорта выше).</p>
+          <form onSubmit={handleImportAll}>
+            <label className="form-group compact-group">
+              <span>Файл дампа (JSON)</span>
+              <input type="file" accept="application/json,.json" onChange={handleImportFile} />
+            </label>
+            <label className="form-group compact-group">
+              <span>или вставьте содержимое</span>
               <textarea
-                rows={16}
+                rows={10}
                 value={importPayload}
-                onChange={(event) => setImportPayload(event.target.value)}
-                placeholder={importFormat === 'json'
-                  ? '[{"name": "React"}, {"name": "Docker"}]'
-                  : 'name\nReact\nDocker'}
+                onChange={(e) => setImportPayload(e.target.value)}
+                placeholder='{"skills":[...],"companies":[...],"students":[...],"vacancies":[...],"responses":[...]}'
                 required
               />
             </label>
-
             <div className="form-actions">
-              <button type="submit" className="auth-btn" disabled={importLoading}>
-                {importLoading ? 'Импорт...' : 'Запустить импорт'}
+              <button type="submit" className="auth-btn" disabled={importLoading || !importPayload}>
+                {importLoading ? 'Импорт...' : 'Импортировать все данные'}
               </button>
             </div>
-
             {importStatus && (
               <div className={`import-status ${importStatus.type === 'error' ? 'error' : 'success'}`}>
                 {importStatus.type === 'error' ? '❌' : '✅'} {importStatus.message}
               </div>
             )}
           </form>
-        </section>
-      )}
-
-      {activeTab === 'export' && (
-        <section className="admin-section admin-card">
-          <div className="section-header compact-header">
-            <h3>Экспорт данных</h3>
-          </div>
-
-          <div className="admin-form-grid compact-top-grid">
-            <label className="form-group compact-group">
-              <span>Тип данных</span>
-              <select value={exportEntity} onChange={(event) => setExportEntity(event.target.value)}>
-                {Object.entries(ENTITY_CONFIG).map(([entityKey, config]) => (
-                  <option key={entityKey} value={entityKey}>{config.label}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="form-group compact-group">
-              <span>Формат</span>
-              <select value={exportFormat} onChange={(event) => setExportFormat(event.target.value)}>
-                <option value="json">JSON</option>
-                <option value="csv">CSV</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="form-actions">
-            <button type="button" className="auth-btn" onClick={handleExport} disabled={exportLoading}>
-              {exportLoading ? 'Экспорт...' : 'Сформировать экспорт'}
-            </button>
-            <button type="button" className="secondary-btn" onClick={downloadExport} disabled={!exportContent}>
-              Скачать файл
-            </button>
-          </div>
-
-          {exportStatus && (
-            <div className={`import-status ${exportStatus.type === 'error' ? 'error' : 'success'}`}>
-              {exportStatus.type === 'error' ? '❌' : '✅'} {exportStatus.message}
-            </div>
-          )}
-
-          <label className="form-group compact-group">
-            <span>Содержимое экспорта {exportFilename ? `(${exportFilename})` : ''}</span>
-            <textarea rows={16} value={exportContent} readOnly placeholder="Сначала выполните экспорт" />
-          </label>
         </section>
       )}
     </div>
