@@ -1,7 +1,15 @@
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { skillId, normalizeSkillName, mapRecord } = require('../utils/neo4j');
 
 const ENTITY_TYPES = ['students', 'companies', 'vacancies', 'skills', 'responses'];
+
+async function maybeHash(password) {
+  const value = String(password || '');
+  if (!value) return '';
+  if (value.startsWith('$2')) return value;
+  return bcrypt.hash(value, 10);
+}
 
 function parseText(value) {
   return value == null ? '' : String(value).trim();
@@ -146,7 +154,7 @@ function normalizeEntityItem(entityType, item) {
         id: parseText(source.id) || crypto.randomUUID(),
         name: parseText(source.name),
         email: parseText(source.email),
-        password: parseText(source.password) || 'student123',
+        password: parseText(source.password),
         degree: parseText(source.degree),
         category: parseText(source.category),
         skills: buildSkillObjects(source.skills),
@@ -156,7 +164,7 @@ function normalizeEntityItem(entityType, item) {
         id: parseText(source.id) || crypto.randomUUID(),
         name: parseText(source.name),
         email: parseText(source.email),
-        password: parseText(source.password) || 'company123',
+        password: parseText(source.password),
         description: parseText(source.description),
         phone: parseText(source.phone),
         website: parseText(source.website),
@@ -237,14 +245,18 @@ function validateEntityItem(entityType, item) {
 }
 
 async function upsertStudent(tx, item) {
+  const hasPassword = !!item.password;
+  const password = hasPassword ? await maybeHash(item.password) : '';
+  const defaultPassword = await maybeHash('student123');
   await tx.run(
     `MERGE (s:Student {id: $id})
      SET s.name = $name,
          s.email = $email,
-         s.password = $password,
          s.degree = $degree,
-         s.category = $category`,
-    item
+         s.category = $category
+     FOREACH (_ IN CASE WHEN $hasPassword THEN [1] ELSE [] END | SET s.password = $password)
+     FOREACH (_ IN CASE WHEN NOT $hasPassword AND coalesce(s.password,'') = '' THEN [1] ELSE [] END | SET s.password = $defaultPassword)`,
+    { ...item, password, hasPassword, defaultPassword }
   );
 
   await tx.run(
@@ -268,18 +280,22 @@ async function upsertStudent(tx, item) {
 }
 
 async function upsertCompany(tx, item) {
+  const hasPassword = !!item.password;
+  const password = hasPassword ? await maybeHash(item.password) : '';
+  const defaultPassword = await maybeHash('company123');
   await tx.run(
     `MERGE (c:Company {id: $id})
      SET c.name = $name,
          c.email = $email,
-         c.password = $password,
          c.description = $description,
          c.phone = $phone,
          c.website = $website,
          c.address = $address,
          c.year = $year,
-         c.industries = $industries`,
-    item
+         c.industries = $industries
+     FOREACH (_ IN CASE WHEN $hasPassword THEN [1] ELSE [] END | SET c.password = $password)
+     FOREACH (_ IN CASE WHEN NOT $hasPassword AND coalesce(c.password,'') = '' THEN [1] ELSE [] END | SET c.password = $defaultPassword)`,
+    { ...item, password, hasPassword, defaultPassword }
   );
 }
 
@@ -673,6 +689,48 @@ async function fetchEntityRows(session, entityType, filters = {}) {
   return fetchResponses(session, filters);
 }
 
+function paginate(rows, page, pageSize) {
+  const total = rows.length;
+  const safePageSize = Math.max(1, Math.min(500, Number(pageSize) || 20));
+  const totalPages = Math.max(1, Math.ceil(total / safePageSize));
+  const safePage = Math.max(1, Math.min(totalPages, Number(page) || 1));
+  const start = (safePage - 1) * safePageSize;
+  return {
+    rows: rows.slice(start, start + safePageSize),
+    total,
+    page: safePage,
+    pageSize: safePageSize,
+    totalPages,
+  };
+}
+
+async function fetchEntityPage(session, entityType, query = {}) {
+  const { page, pageSize, ...filters } = query;
+  const rows = await fetchEntityRows(session, entityType, filters);
+  return paginate(rows, page, pageSize);
+}
+
+async function fetchEntityById(session, entityType, id) {
+  const rows = await fetchEntityRows(session, entityType, { id });
+  return rows.find((row) => row.id === id) || rows[0] || null;
+}
+
+async function deleteEntity(tx, entityType, id) {
+  if (!ENTITY_TYPES.includes(entityType)) {
+    throw new Error('Неизвестный тип данных');
+  }
+
+  const map = {
+    students: 'MATCH (n:Student {id: $id}) DETACH DELETE n',
+    companies: 'MATCH (n:Company {id: $id}) DETACH DELETE n',
+    vacancies: 'MATCH (n:Offer {id: $id}) DETACH DELETE n',
+    skills: 'MATCH (n:Skill {id: $id}) DETACH DELETE n',
+    responses: 'MATCH ()-[r:RESPONDED_TO {id: $id}]->() DELETE r',
+  };
+
+  await tx.run(map[entityType], { id });
+}
+
 function parseImportPayload(entityType, format, payload) {
   if (!ENTITY_TYPES.includes(entityType)) {
     throw new Error('Неизвестный тип данных для импорта');
@@ -704,5 +762,8 @@ module.exports = {
   toCsv,
   parseImportPayload,
   fetchEntityRows,
+  fetchEntityPage,
+  fetchEntityById,
   upsertEntity,
+  deleteEntity,
 };
