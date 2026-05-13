@@ -235,6 +235,113 @@ function renderCell(value) {
   return String(value);
 }
 
+function ViewModal({ entityType, item, onClose, onEdit }) {
+  const config = ENTITY_CONFIG[entityType];
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        <h2>Просмотр: {config.label}</h2>
+        <div className="admin-form-grid">
+          {Object.entries(item).map(([key, value]) => (
+            <div key={key} className="form-group compact-group">
+              <span><strong>{key}</strong></span>
+              <span>{renderCell(value)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="form-actions">
+          <button type="button" className="auth-btn" onClick={onEdit}>Редактировать</button>
+          <button type="button" className="secondary-btn" onClick={onClose}>Закрыть</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditModal({ entityType, item, onClose, onSaved }) {
+  const config = ENTITY_CONFIG[entityType];
+  const initial = config.createFields.reduce((acc, field) => {
+    let v = item?.[field.name];
+    if (Array.isArray(v)) v = v.join(', ');
+    return { ...acc, [field.name]: v ?? '' };
+  }, {});
+  const [values, setValues] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  const handleChange = (name, value) => setValues((prev) => ({ ...prev, [name]: value }));
+
+  const handleSave = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setStatus(null);
+    try {
+      await apiFetch(`/admin/entities/${entityType}/${encodeURIComponent(item.id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(values),
+      });
+      onSaved();
+    } catch (error) {
+      setStatus({ type: 'error', message: error.message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        <h2>Редактирование: {config.label}</h2>
+        <form onSubmit={handleSave}>
+          <div className="admin-form-grid">
+            {config.createFields.map((field) => (
+              <label key={field.name} className={`form-group compact-group ${field.type === 'textarea' ? 'full-width' : ''}`}>
+                <span>{field.label}</span>
+                {field.type === 'textarea' ? (
+                  <textarea
+                    rows={4}
+                    value={values[field.name] || ''}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                  />
+                ) : field.type === 'select' ? (
+                  <select
+                    value={values[field.name] || ''}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                  >
+                    <option value="">Выберите значение</option>
+                    {(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                ) : (
+                  <input
+                    type={field.type}
+                    value={values[field.name] || ''}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    placeholder={field.placeholder || ''}
+                    disabled={field.name === 'id'}
+                  />
+                )}
+              </label>
+            ))}
+          </div>
+          {status && (
+            <div className={`import-status ${status.type === 'error' ? 'error' : 'success'}`}>
+              {status.type === 'error' ? '❌' : '✅'} {status.message}
+            </div>
+          )}
+          <div className="form-actions">
+            <button type="submit" className="auth-btn" disabled={saving}>
+              {saving ? 'Сохранение...' : 'Сохранить'}
+            </button>
+            <button type="button" className="secondary-btn" onClick={onClose}>Отмена</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('browser');
 
@@ -263,6 +370,9 @@ export default function AdminPanel() {
   const [importPayload, setImportPayload] = useState('');
   const [importStatus, setImportStatus] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
+
+  const [viewItem, setViewItem] = useState(null);
+  const [editItem, setEditItem] = useState(null);
 
   const entityConfig = useMemo(() => ENTITY_CONFIG[selectedEntity], [selectedEntity]);
 
@@ -658,6 +768,7 @@ export default function AdminPanel() {
                       {entityConfig.columns.map((column) => (
                         <th key={column.key}>{column.label}</th>
                       ))}
+                      <th>Действия</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -666,6 +777,10 @@ export default function AdminPanel() {
                         {entityConfig.columns.map((column) => (
                           <td key={column.key}>{renderCell(row[column.key])}</td>
                         ))}
+                        <td>
+                          <button type="button" className="details-btn" onClick={() => setViewItem(row)} style={{ marginRight: 4 }}>👁</button>
+                          <button type="button" className="details-btn" onClick={() => setEditItem(row)}>✎</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -735,6 +850,23 @@ export default function AdminPanel() {
             )}
           </form>
         </section>
+      )}
+
+      {viewItem && !editItem && (
+        <ViewModal
+          entityType={selectedEntity}
+          item={viewItem}
+          onClose={() => setViewItem(null)}
+          onEdit={() => { setEditItem(viewItem); setViewItem(null); }}
+        />
+      )}
+      {editItem && (
+        <EditModal
+          entityType={selectedEntity}
+          item={editItem}
+          onClose={() => setEditItem(null)}
+          onSaved={() => { setEditItem(null); loadRows(selectedEntity, filters); }}
+        />
       )}
     </div>
   );
