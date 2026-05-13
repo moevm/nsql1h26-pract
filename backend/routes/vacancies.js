@@ -3,6 +3,7 @@ const express = require('express');
 const { driver, NEO4J_DATABASE } = require('../config/neo4j');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 const { mapRecord, formatSalary, skillId, normalizeSkillName } = require('../utils/neo4j');
+const { asyncHandler, HttpError } = require('../utils/async');
 
 const router = express.Router();
 
@@ -29,7 +30,7 @@ function parseArrayParam(value) {
     .filter(Boolean);
 }
 
-router.get('/meta', async (_req, res) => {
+router.get('/meta', asyncHandler(async (_req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE, defaultAccessMode: 'READ' });
 
   try {
@@ -69,14 +70,12 @@ router.get('/meta', async (_req, res) => {
     ])).sort((left, right) => left.localeCompare(right, 'ru'));
 
     return res.json({ skills, directions });
-  } catch (error) {
-    return res.status(500).json({ message: 'Не удалось загрузить данные для фильтров', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE, defaultAccessMode: 'READ' });
   const {
     title = '',
@@ -174,14 +173,12 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     return res.json({ vacancies });
-  } catch (error) {
-    return res.status(500).json({ message: 'Не удалось загрузить вакансии', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
-router.post('/', requireAuth, requireRole('company'), async (req, res) => {
+router.post('/', requireAuth, requireRole('company'), asyncHandler(async (req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE });
   const {
     title,
@@ -201,7 +198,7 @@ router.post('/', requireAuth, requireRole('company'), async (req, res) => {
   } = req.body || {};
 
   if (!title || !category || !workType || !employmentType || !workFormat) {
-    return res.status(400).json({ message: 'Не заполнены обязательные поля вакансии' });
+    throw new HttpError(400, 'Не заполнены обязательные поля вакансии');
   }
 
   const vacancyId = crypto.randomUUID();
@@ -220,7 +217,7 @@ router.post('/', requireAuth, requireRole('company'), async (req, res) => {
       );
 
       if (!companyResult.records.length) {
-        throw new Error('Компания не найдена');
+        throw new HttpError(400, 'Компания не найдена');
       }
 
       const company = mapRecord(companyResult.records[0]);
@@ -237,7 +234,7 @@ router.post('/', requireAuth, requireRole('company'), async (req, res) => {
         existingSkills = skillsResult.records[0] ? (mapRecord(skillsResult.records[0]).skills || []) : [];
 
         if (existingSkills.length !== normalizedSkills.length) {
-          throw new Error('Можно выбрать только существующие навыки из базы данных');
+          throw new HttpError(400, 'Можно выбрать только существующие навыки из базы данных');
         }
       }
 
@@ -327,15 +324,12 @@ router.post('/', requireAuth, requireRole('company'), async (req, res) => {
         salaryText: formatSalary(createdVacancy.salary),
       },
     });
-  } catch (error) {
-    const status = error.message === 'Компания не найдена' || error.message === 'Можно выбрать только существующие навыки из базы данных' ? 400 : 500;
-    return res.status(status).json({ message: error.message || 'Не удалось создать вакансию', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
-router.delete('/:id', requireAuth, requireRole('company'), async (req, res) => {
+router.delete('/:id', requireAuth, requireRole('company'), asyncHandler(async (req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE });
 
   try {
@@ -350,18 +344,16 @@ router.delete('/:id', requireAuth, requireRole('company'), async (req, res) => {
     ));
 
     if (!result.records.length) {
-      return res.status(404).json({ message: 'Вакансия не найдена' });
+      throw new HttpError(404, 'Вакансия не найдена');
     }
 
     return res.json({ message: 'Вакансия удалена', id: req.params.id });
-  } catch (error) {
-    return res.status(500).json({ message: 'Не удалось удалить вакансию', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
-router.post('/:id/respond', requireAuth, requireRole('student'), async (req, res) => {
+router.post('/:id/respond', requireAuth, requireRole('student'), asyncHandler(async (req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE });
   const responseId = crypto.randomUUID();
   const createdAt = new Date().toISOString();
@@ -377,7 +369,7 @@ router.post('/:id/respond', requireAuth, requireRole('student'), async (req, res
     );
 
     if (existing.records.length) {
-      return res.status(409).json({ message: 'Вы уже откликались на эту вакансию' });
+      throw new HttpError(409, 'Вы уже откликались на эту вакансию');
     }
 
     const result = await session.executeWrite(async (tx) => {
@@ -411,15 +403,13 @@ router.post('/:id/respond', requireAuth, requireRole('student'), async (req, res
     });
 
     if (!result) {
-      return res.status(404).json({ message: 'Вакансия не найдена' });
+      throw new HttpError(404, 'Вакансия не найдена');
     }
 
     return res.status(201).json({ response: result });
-  } catch (error) {
-    return res.status(500).json({ message: 'Не удалось откликнуться на вакансию', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
 module.exports = router;

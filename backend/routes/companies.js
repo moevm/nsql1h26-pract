@@ -2,6 +2,7 @@ const express = require('express');
 const { driver, NEO4J_DATABASE } = require('../config/neo4j');
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { mapRecord, formatSalary } = require('../utils/neo4j');
+const { asyncHandler, HttpError } = require('../utils/async');
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ function parseArrayParam(value) {
     .filter(Boolean);
 }
 
-router.get('/', async (_req, res) => {
+router.get('/', asyncHandler(async (_req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE, defaultAccessMode: 'READ' });
 
   try {
@@ -51,14 +52,12 @@ router.get('/', async (_req, res) => {
     );
 
     return res.json({ companies: result.records.map((record) => mapRecord(record).company) });
-  } catch (error) {
-    return res.status(500).json({ message: 'Не удалось загрузить компании', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
-router.get('/me/vacancies', requireAuth, requireRole('company'), async (req, res) => {
+router.get('/me/vacancies', requireAuth, requireRole('company'), asyncHandler(async (req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE, defaultAccessMode: 'READ' });
 
   try {
@@ -105,14 +104,12 @@ router.get('/me/vacancies', requireAuth, requireRole('company'), async (req, res
     });
 
     return res.json({ vacancies });
-  } catch (error) {
-    return res.status(500).json({ message: 'Не удалось загрузить вакансии компании', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
-router.get('/me/responses', requireAuth, requireRole('company'), async (req, res) => {
+router.get('/me/responses', requireAuth, requireRole('company'), asyncHandler(async (req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE, defaultAccessMode: 'READ' });
   const {
     studentName = '',
@@ -197,19 +194,17 @@ router.get('/me/responses', requireAuth, requireRole('company'), async (req, res
       responses,
       vacancies: vacanciesResult.records.map((record) => mapRecord(record)),
     });
-  } catch (error) {
-    return res.status(500).json({ message: 'Не удалось загрузить отклики', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
-router.patch('/responses/:id/status', requireAuth, requireRole('company'), async (req, res) => {
+router.patch('/responses/:id/status', requireAuth, requireRole('company'), asyncHandler(async (req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE });
   const { status } = req.body || {};
 
   if (!status) {
-    return res.status(400).json({ message: 'Статус обязателен' });
+    throw new HttpError(400, 'Статус обязателен');
   }
 
   try {
@@ -226,15 +221,13 @@ router.patch('/responses/:id/status', requireAuth, requireRole('company'), async
     );
 
     if (!result.records.length) {
-      return res.status(404).json({ message: 'Отклик не найден' });
+      throw new HttpError(404, 'Отклик не найден');
     }
 
     return res.json({ response: mapRecord(result.records[0]) });
-  } catch (error) {
-    return res.status(500).json({ message: 'Не удалось обновить статус', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
 module.exports = router;

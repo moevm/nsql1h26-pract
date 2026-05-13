@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  // eslint-disable-next-line no-console
+  console.error('FATAL: JWT_SECRET is not set in environment. Refusing to start.');
+  process.exit(1);
+}
 
 function signToken(user) {
   return jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });

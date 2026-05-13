@@ -2,10 +2,11 @@ const express = require('express');
 const { driver, NEO4J_DATABASE } = require('../config/neo4j');
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { mapRecord } = require('../utils/neo4j');
+const { asyncHandler, HttpError } = require('../utils/async');
 
 const router = express.Router();
 
-router.get('/me', requireAuth, requireRole('student'), async (req, res) => {
+router.get('/me', requireAuth, requireRole('student'), asyncHandler(async (req, res) => {
   const session = driver.session({ database: NEO4J_DATABASE, defaultAccessMode: 'READ' });
 
   try {
@@ -24,7 +25,7 @@ router.get('/me', requireAuth, requireRole('student'), async (req, res) => {
     );
 
     if (!profileResult.records.length) {
-      return res.status(404).json({ message: 'Студент не найден' });
+      throw new HttpError(404, 'Студент не найден');
     }
 
     const profile = mapRecord(profileResult.records[0]);
@@ -45,11 +46,9 @@ router.get('/me', requireAuth, requireRole('student'), async (req, res) => {
       skills: profile.skills,
       applications: responsesResult.records.map((record) => mapRecord(record)),
     });
-  } catch (error) {
-    return res.status(500).json({ message: 'Не удалось загрузить профиль студента', details: error.message });
   } finally {
     await session.close();
   }
-});
+}));
 
 module.exports = router;
