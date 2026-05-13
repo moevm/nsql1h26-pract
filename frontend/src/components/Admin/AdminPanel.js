@@ -79,18 +79,11 @@ const ENTITY_CONFIG = {
       { name: 'companyName', label: 'Компания', type: 'text' },
       { name: 'category', label: 'Категория', type: 'text' },
       { name: 'workType', label: 'Тип работы', type: 'text' },
-      { name: 'practiceType', label: 'Тип практики', type: 'text' },
       { name: 'employmentType', label: 'Занятость', type: 'text' },
       { name: 'workFormat', label: 'Формат работы', type: 'text' },
-      { name: 'address', label: 'Адрес', type: 'text' },
       { name: 'skill', label: 'Навык', type: 'text' },
-      { name: 'direction', label: 'Направление подготовки', type: 'text' },
       { name: 'salaryFrom', label: 'Зарплата от', type: 'number' },
       { name: 'salaryTo', label: 'Зарплата до', type: 'number' },
-      { name: 'capacityFrom', label: 'Мест от', type: 'number' },
-      { name: 'capacityTo', label: 'Мест до', type: 'number' },
-      { name: 'postedDateFrom', label: 'Дата публикации от', type: 'date' },
-      { name: 'postedDateTo', label: 'Дата публикации до', type: 'date' },
     ],
     columns: [
       { key: 'id', label: 'ID' },
@@ -99,18 +92,12 @@ const ENTITY_CONFIG = {
       { key: 'companyName', label: 'Компания' },
       { key: 'category', label: 'Категория' },
       { key: 'workType', label: 'Тип работы' },
-      { key: 'practiceType', label: 'Тип практики' },
       { key: 'employmentType', label: 'Занятость' },
       { key: 'workFormat', label: 'Формат' },
       { key: 'capacity', label: 'Мест' },
       { key: 'salary', label: 'Зарплата' },
       { key: 'postedDate', label: 'Дата' },
       { key: 'skills', label: 'Навыки' },
-      { key: 'directions', label: 'Направления' },
-      { key: 'address', label: 'Адрес' },
-      { key: 'requirements', label: 'Требования' },
-      { key: 'responsibilities', label: 'Обязанности' },
-      { key: 'conditions', label: 'Условия' },
     ],
     createFields: [
       { name: 'id', label: 'ID', type: 'text', placeholder: 'Можно оставить пустым' },
@@ -125,8 +112,8 @@ const ENTITY_CONFIG = {
       { name: 'salary', label: 'Зарплата', type: 'number' },
       { name: 'postedDate', label: 'Дата публикации', type: 'date' },
       { name: 'address', label: 'Адрес', type: 'text' },
-      { name: 'skills', label: 'Навыки', type: 'skill-multiselect', initialValue: [] },
-      { name: 'directions', label: 'Направления', type: 'direction-multiselect', initialValue: [] },
+      { name: 'skills', label: 'Навыки (через запятую)', type: 'text', placeholder: 'React, SQL' },
+      { name: 'directions', label: 'Направления (через запятую)', type: 'text' },
       { name: 'requirements', label: 'Требования', type: 'textarea' },
       { name: 'responsibilities', label: 'Обязанности', type: 'textarea' },
       { name: 'conditions', label: 'Условия', type: 'textarea' },
@@ -137,10 +124,6 @@ const ENTITY_CONFIG = {
     filters: [
       { name: 'id', label: 'ID', type: 'text' },
       { name: 'name', label: 'Название', type: 'text' },
-      { name: 'studentsFrom', label: 'Студентов от', type: 'number' },
-      { name: 'studentsTo', label: 'Студентов до', type: 'number' },
-      { name: 'vacanciesFrom', label: 'Вакансий от', type: 'number' },
-      { name: 'vacanciesTo', label: 'Вакансий до', type: 'number' },
     ],
     columns: [
       { key: 'id', label: 'ID' },
@@ -157,26 +140,14 @@ const ENTITY_CONFIG = {
     label: 'Отклики',
     filters: [
       { name: 'id', label: 'ID', type: 'text' },
-      { name: 'studentId', label: 'ID студента', type: 'text' },
       { name: 'studentName', label: 'Имя студента', type: 'text' },
-      { name: 'studentEmail', label: 'Email студента', type: 'text' },
-      { name: 'studentCategory', label: 'Категория', type: 'text' },
-      { name: 'offerId', label: 'ID вакансии', type: 'text' },
       { name: 'vacancyTitle', label: 'Название вакансии', type: 'text' },
       { name: 'companyName', label: 'Компания', type: 'text' },
       { name: 'status', label: 'Статус', type: 'text' },
-      { name: 'createdAtFrom', label: 'Дата отклика от', type: 'datetime-local' },
-      { name: 'createdAtTo', label: 'Дата отклика до', type: 'datetime-local' },
-      { name: 'matchDistanceFrom', label: 'Совпадение от', type: 'number' },
-      { name: 'matchDistanceTo', label: 'Совпадение до', type: 'number' },
     ],
     columns: [
       { key: 'id', label: 'ID' },
-      { key: 'studentId', label: 'ID студента' },
       { key: 'studentName', label: 'Студент' },
-      { key: 'studentEmail', label: 'Email' },
-      { key: 'studentCategory', label: 'Категория' },
-      { key: 'offerId', label: 'ID вакансии' },
       { key: 'vacancyTitle', label: 'Вакансия' },
       { key: 'companyName', label: 'Компания' },
       { key: 'status', label: 'Статус' },
@@ -195,9 +166,10 @@ const ENTITY_CONFIG = {
 
 const MAIN_TABS = [
   { key: 'browser', label: 'Просмотр БД' },
-  { key: 'import', label: 'Импорт' },
-  { key: 'export', label: 'Экспорт' },
+  { key: 'data', label: 'Импорт / Экспорт' },
 ];
+
+const PAGE_SIZE = 10;
 
 function createInitialState(fields) {
   return fields.reduce((acc, field) => ({
@@ -236,12 +208,120 @@ function renderCell(value) {
   return String(value);
 }
 
+function ViewModal({ entityType, item, onClose, onEdit }) {
+  const config = ENTITY_CONFIG[entityType];
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        <h2>Просмотр: {config.label}</h2>
+        <div className="admin-form-grid">
+          {Object.entries(item).map(([key, value]) => (
+            <div key={key} className="form-group compact-group">
+              <span><strong>{key}</strong></span>
+              <span>{renderCell(value)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="form-actions">
+          <button type="button" className="auth-btn" onClick={onEdit}>Редактировать</button>
+          <button type="button" className="secondary-btn" onClick={onClose}>Закрыть</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditModal({ entityType, item, onClose, onSaved }) {
+  const config = ENTITY_CONFIG[entityType];
+  const initial = config.createFields.reduce((acc, field) => {
+    let v = item?.[field.name];
+    if (Array.isArray(v)) v = v.join(', ');
+    return { ...acc, [field.name]: v ?? '' };
+  }, {});
+  const [values, setValues] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  const handleChange = (name, value) => setValues((prev) => ({ ...prev, [name]: value }));
+
+  const handleSave = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setStatus(null);
+    try {
+      await apiFetch(`/admin/entities/${entityType}/${encodeURIComponent(item.id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(values),
+      });
+      onSaved();
+    } catch (error) {
+      setStatus({ type: 'error', message: error.message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        <h2>Редактирование: {config.label}</h2>
+        <form onSubmit={handleSave}>
+          <div className="admin-form-grid">
+            {config.createFields.map((field) => (
+              <label key={field.name} className={`form-group compact-group ${field.type === 'textarea' ? 'full-width' : ''}`}>
+                <span>{field.label}</span>
+                {field.type === 'textarea' ? (
+                  <textarea
+                    rows={4}
+                    value={values[field.name] || ''}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                  />
+                ) : field.type === 'select' ? (
+                  <select
+                    value={values[field.name] || ''}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                  >
+                    <option value="">Выберите значение</option>
+                    {(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                ) : (
+                  <input
+                    type={field.type}
+                    value={values[field.name] || ''}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    placeholder={field.placeholder || ''}
+                    disabled={field.name === 'id'}
+                  />
+                )}
+              </label>
+            ))}
+          </div>
+          {status && (
+            <div className={`import-status ${status.type === 'error' ? 'error' : 'success'}`}>
+              {status.type === 'error' ? '❌' : '✅'} {status.message}
+            </div>
+          )}
+          <div className="form-actions">
+            <button type="submit" className="auth-btn" disabled={saving}>
+              {saving ? 'Сохранение...' : 'Сохранить'}
+            </button>
+            <button type="button" className="secondary-btn" onClick={onClose}>Отмена</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('browser');
 
   const [selectedEntity, setSelectedEntity] = useState('students');
   const [filters, setFilters] = useState(() => createInitialState(ENTITY_CONFIG.students.filters));
-  const [rows, setRows] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageData, setPageData] = useState({ rows: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 1 });
   const [rowsLoading, setRowsLoading] = useState(false);
   const [rowsError, setRowsError] = useState('');
 
@@ -256,18 +336,17 @@ export default function AdminPanel() {
   const [selectedSkillToAdd, setSelectedSkillToAdd] = useState('');
   const [selectedDirectionToAdd, setSelectedDirectionToAdd] = useState('');
 
-  const [exportEntity, setExportEntity] = useState('students');
-  const [exportFormat, setExportFormat] = useState('json');
   const [exportContent, setExportContent] = useState('');
   const [exportFilename, setExportFilename] = useState('');
   const [exportStatus, setExportStatus] = useState(null);
   const [exportLoading, setExportLoading] = useState(false);
 
-  const [importEntity, setImportEntity] = useState('students');
-  const [importFormat, setImportFormat] = useState('json');
   const [importPayload, setImportPayload] = useState('');
   const [importStatus, setImportStatus] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
+
+  const [viewItem, setViewItem] = useState(null);
+  const [editItem, setEditItem] = useState(null);
 
   const entityConfig = useMemo(() => ENTITY_CONFIG[selectedEntity], [selectedEntity]);
 
@@ -303,16 +382,22 @@ export default function AdminPanel() {
     };
   }, []);
 
-  const loadRows = async (entity = selectedEntity, queryFilters = filters) => {
+  const loadRows = async (entity = selectedEntity, queryFilters = filters, pageNum = page) => {
     setRowsLoading(true);
     setRowsError('');
     try {
-      const query = buildQuery(queryFilters);
+      const query = buildQuery({ ...queryFilters, page: pageNum, pageSize: PAGE_SIZE });
       const response = await apiFetch(`/admin/entities/${entity}${query}`);
-      setRows(response.rows);
+      setPageData({
+        rows: response.rows || [],
+        total: response.total || 0,
+        page: response.page || 1,
+        pageSize: response.pageSize || PAGE_SIZE,
+        totalPages: response.totalPages || 1,
+      });
     } catch (error) {
       setRowsError(error.message);
-      setRows([]);
+      setPageData({ rows: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 1 });
     } finally {
       setRowsLoading(false);
     }
@@ -322,23 +407,23 @@ export default function AdminPanel() {
     const nextFilters = createInitialState(entityConfig.filters);
     setFilters(nextFilters);
     setCreateValues(createInitialState(entityConfig.createFields));
-    setRows([]);
+    setPage(1);
     setRowsError('');
     setCreateStatus(null);
     setSelectedSkillToAdd('');
     setSelectedDirectionToAdd('');
     if (activeTab === 'browser') {
-      loadRows(selectedEntity, nextFilters);
+      loadRows(selectedEntity, nextFilters, 1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityConfig]);
 
   useEffect(() => {
     if (activeTab === 'browser') {
-      loadRows(selectedEntity, filters);
+      loadRows(selectedEntity, filters, page);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, selectedEntity]);
+  }, [activeTab, selectedEntity, page]);
 
   const handleFilterChange = (fieldName, value) => {
     setFilters((prev) => ({ ...prev, [fieldName]: value }));
@@ -374,7 +459,23 @@ export default function AdminPanel() {
   const resetFilters = () => {
     const nextFilters = createInitialState(entityConfig.filters);
     setFilters(nextFilters);
-    loadRows(selectedEntity, nextFilters);
+    setPage(1);
+    loadRows(selectedEntity, nextFilters, 1);
+  };
+
+  const handleApplyFilters = () => {
+    setPage(1);
+    loadRows(selectedEntity, filters, 1);
+  };
+
+  const handleDelete = async (row) => {
+    if (!window.confirm(`Удалить запись ${row.id}?`)) return;
+    try {
+      await apiFetch(`/admin/entities/${selectedEntity}/${encodeURIComponent(row.id)}`, { method: 'DELETE' });
+      await loadRows(selectedEntity, filters, page);
+    } catch (error) {
+      window.alert(error.message);
+    }
   };
 
   const handleCreateSubmit = async (event) => {
@@ -391,7 +492,7 @@ export default function AdminPanel() {
       setCreateValues(createInitialState(entityConfig.createFields));
       setSelectedSkillToAdd('');
       setSelectedDirectionToAdd('');
-      await loadRows(selectedEntity, filters);
+      await loadRows(selectedEntity, filters, page);
     } catch (error) {
       setCreateStatus({ type: 'error', message: error.message });
     } finally {
@@ -399,14 +500,15 @@ export default function AdminPanel() {
     }
   };
 
-  const handleExport = async () => {
+  const handleExportAll = async () => {
     setExportLoading(true);
     setExportStatus(null);
     try {
-      const response = await apiFetch(`/admin/export/${exportEntity}?format=${exportFormat}`);
+      const response = await apiFetch('/admin/export-all');
       setExportContent(response.content);
       setExportFilename(response.filename);
-      setExportStatus({ type: 'success', message: `Экспортировано записей: ${response.count}` });
+      const counts = Object.entries(response.counts || {}).map(([k, v]) => `${k}: ${v}`).join(', ');
+      setExportStatus({ type: 'success', message: `Экспорт готов (${counts})` });
     } catch (error) {
       setExportStatus({ type: 'error', message: error.message });
       setExportContent('');
@@ -420,8 +522,7 @@ export default function AdminPanel() {
     if (!exportContent || !exportFilename) {
       return;
     }
-
-    const blob = new Blob([exportContent], { type: exportFormat === 'json' ? 'application/json' : 'text/csv;charset=utf-8;' });
+    const blob = new Blob([exportContent], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -430,29 +531,33 @@ export default function AdminPanel() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = async (event) => {
+  const handleImportAll = async (event) => {
     event.preventDefault();
     setImportLoading(true);
     setImportStatus(null);
     try {
-      const response = await apiFetch('/admin/import', {
+      const response = await apiFetch('/admin/import-all', {
         method: 'POST',
-        body: JSON.stringify({
-          entityType: importEntity,
-          format: importFormat,
-          payload: importPayload,
-        }),
+        body: JSON.stringify({ payload: importPayload }),
       });
-      setImportStatus({ type: 'success', message: response.message });
+      const counts = Object.entries(response.counts || {}).map(([k, v]) => `${k}: ${v}`).join(', ');
+      setImportStatus({ type: 'success', message: `${response.message}. ${counts}` });
       setImportPayload('');
-      if (activeTab === 'browser' && selectedEntity === importEntity) {
-        await loadRows(selectedEntity, filters);
+      if (activeTab === 'browser') {
+        await loadRows(selectedEntity, filters, page);
       }
     } catch (error) {
       setImportStatus({ type: 'error', message: error.message });
     } finally {
       setImportLoading(false);
     }
+  };
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    setImportPayload(text);
   };
 
   const renderMultiSelectField = (field) => {
@@ -558,8 +663,7 @@ export default function AdminPanel() {
       <div className="admin-header-block">
         <h1>Админ-панель</h1>
         <p>
-          Здесь можно просматривать содержимое базы данных в виде таблиц, применять многокритериальные фильтры,
-          добавлять записи по каждому типу данных и выполнять импорт/экспорт.
+          Просмотр содержимого базы данных, добавление записей по каждому типу данных и единый импорт/экспорт всех данных приложения.
         </p>
       </div>
 
@@ -593,7 +697,7 @@ export default function AdminPanel() {
                   ))}
                 </select>
               </label>
-              <button type="button" className="details-btn entity-refresh-btn" onClick={() => loadRows(selectedEntity, filters)}>
+              <button type="button" className="details-btn entity-refresh-btn" onClick={() => loadRows(selectedEntity, filters, page)}>
                 Обновить таблицу
               </button>
             </div>
@@ -615,7 +719,7 @@ export default function AdminPanel() {
                 ))}
               </div>
               <div className="form-actions">
-                <button type="button" className="auth-btn" onClick={() => loadRows(selectedEntity, filters)}>Применить фильтры</button>
+                <button type="button" className="auth-btn" onClick={handleApplyFilters}>Применить фильтры</button>
                 <button type="button" className="secondary-btn" onClick={resetFilters}>Сбросить</button>
               </div>
             </div>
@@ -643,85 +747,112 @@ export default function AdminPanel() {
           <div className="admin-card admin-table-card">
             <div className="section-header compact-header">
               <h4>Таблица: {entityConfig.label}</h4>
-              <span className="vacancies-count">Записей: {rows.length}</span>
+              <span className="vacancies-count">
+                Всего: {pageData.total} • Страница {pageData.page}/{pageData.totalPages}
+              </span>
             </div>
 
             {rowsLoading ? (
               <p>Загрузка таблицы...</p>
             ) : rowsError ? (
               <div className="import-status error">❌ {rowsError}</div>
-            ) : rows.length === 0 ? (
+            ) : pageData.rows.length === 0 ? (
               <p>По выбранным фильтрам записи не найдены.</p>
             ) : (
-              <div className="admin-table-wrapper">
-                <table className="results-table admin-db-table">
-                  <thead>
-                    <tr>
-                      {entityConfig.columns.map((column) => (
-                        <th key={column.key}>{column.label}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, index) => (
-                      <tr key={`${row.id || index}-${index}`}>
+              <>
+                <div className="admin-table-wrapper">
+                  <table className="results-table admin-db-table">
+                    <thead>
+                      <tr>
                         {entityConfig.columns.map((column) => (
-                          <td key={column.key}>{renderCell(row[column.key])}</td>
+                          <th key={column.key}>{column.label}</th>
                         ))}
+                        <th>Действия</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {pageData.rows.map((row, index) => (
+                        <tr key={`${row.id || index}-${index}`}>
+                          {entityConfig.columns.map((column) => (
+                            <td key={column.key}>{renderCell(row[column.key])}</td>
+                          ))}
+                          <td>
+                            <button type="button" className="details-btn" onClick={() => setViewItem(row)} style={{ marginRight: 4 }}>👁</button>
+                            <button type="button" className="details-btn" onClick={() => setEditItem(row)} style={{ marginRight: 4 }}>✎</button>
+                            <button type="button" className="delete-vacancy-btn" onClick={() => handleDelete(row)}>✕</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="form-actions" style={{ justifyContent: 'center', gap: 8 }}>
+                  <button type="button" className="secondary-btn" onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1}>
+                    ← Назад
+                  </button>
+                  <span style={{ alignSelf: 'center' }}>{pageData.page} / {pageData.totalPages}</span>
+                  <button type="button" className="secondary-btn" onClick={() => setPage(Math.min(pageData.totalPages, page + 1))} disabled={page >= pageData.totalPages}>
+                    Вперед →
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </section>
       )}
 
-      {activeTab === 'import' && (
+      {activeTab === 'data' && (
         <section className="admin-section admin-card">
           <div className="section-header compact-header">
-            <h3>Импорт данных</h3>
+            <h3>Экспорт всех данных</h3>
           </div>
-          <form onSubmit={handleImport}>
-            <div className="admin-form-grid compact-top-grid">
-              <label className="form-group compact-group">
-                <span>Тип данных</span>
-                <select value={importEntity} onChange={(event) => setImportEntity(event.target.value)}>
-                  {Object.entries(ENTITY_CONFIG).map(([entityKey, config]) => (
-                    <option key={entityKey} value={entityKey}>{config.label}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-group compact-group">
-                <span>Формат</span>
-                <select value={importFormat} onChange={(event) => setImportFormat(event.target.value)}>
-                  <option value="json">JSON</option>
-                  <option value="csv">CSV</option>
-                </select>
-              </label>
+          <p>Одна кнопка выгружает все данные приложения в JSON-файл.</p>
+          <div className="form-actions">
+            <button type="button" className="auth-btn" onClick={handleExportAll} disabled={exportLoading}>
+              {exportLoading ? 'Экспорт...' : 'Экспортировать все данные'}
+            </button>
+            <button type="button" className="secondary-btn" onClick={downloadExport} disabled={!exportContent}>
+              Скачать файл
+            </button>
+          </div>
+          {exportStatus && (
+            <div className={`import-status ${exportStatus.type === 'error' ? 'error' : 'success'}`}>
+              {exportStatus.type === 'error' ? '❌' : '✅'} {exportStatus.message}
             </div>
-
+          )}
+          {exportContent && (
             <label className="form-group compact-group">
-              <span>Данные для импорта</span>
+              <span>Содержимое экспорта ({exportFilename})</span>
+              <textarea rows={12} value={exportContent} readOnly />
+            </label>
+          )}
+
+          <hr style={{ margin: '24px 0' }} />
+
+          <div className="section-header compact-header">
+            <h3>Импорт всех данных</h3>
+          </div>
+          <p>Одна кнопка загружает все данные приложения из JSON-дампа (формат — результат экспорта выше).</p>
+          <form onSubmit={handleImportAll}>
+            <label className="form-group compact-group">
+              <span>Файл дампа (JSON)</span>
+              <input type="file" accept="application/json,.json" onChange={handleImportFile} />
+            </label>
+            <label className="form-group compact-group">
+              <span>или вставьте содержимое</span>
               <textarea
-                rows={16}
+                rows={10}
                 value={importPayload}
-                onChange={(event) => setImportPayload(event.target.value)}
-                placeholder={importFormat === 'json'
-                  ? '[{"name": "React"}, {"name": "Docker"}]'
-                  : 'name\nReact\nDocker'}
+                onChange={(e) => setImportPayload(e.target.value)}
+                placeholder='{"skills":[...],"companies":[...],"students":[...],"vacancies":[...],"responses":[...]}'
                 required
               />
             </label>
-
             <div className="form-actions">
-              <button type="submit" className="auth-btn" disabled={importLoading}>
-                {importLoading ? 'Импорт...' : 'Запустить импорт'}
+              <button type="submit" className="auth-btn" disabled={importLoading || !importPayload}>
+                {importLoading ? 'Импорт...' : 'Импортировать все данные'}
               </button>
             </div>
-
             {importStatus && (
               <div className={`import-status ${importStatus.type === 'error' ? 'error' : 'success'}`}>
                 {importStatus.type === 'error' ? '❌' : '✅'} {importStatus.message}
@@ -731,51 +862,21 @@ export default function AdminPanel() {
         </section>
       )}
 
-      {activeTab === 'export' && (
-        <section className="admin-section admin-card">
-          <div className="section-header compact-header">
-            <h3>Экспорт данных</h3>
-          </div>
-
-          <div className="admin-form-grid compact-top-grid">
-            <label className="form-group compact-group">
-              <span>Тип данных</span>
-              <select value={exportEntity} onChange={(event) => setExportEntity(event.target.value)}>
-                {Object.entries(ENTITY_CONFIG).map(([entityKey, config]) => (
-                  <option key={entityKey} value={entityKey}>{config.label}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="form-group compact-group">
-              <span>Формат</span>
-              <select value={exportFormat} onChange={(event) => setExportFormat(event.target.value)}>
-                <option value="json">JSON</option>
-                <option value="csv">CSV</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="form-actions">
-            <button type="button" className="auth-btn" onClick={handleExport} disabled={exportLoading}>
-              {exportLoading ? 'Экспорт...' : 'Сформировать экспорт'}
-            </button>
-            <button type="button" className="secondary-btn" onClick={downloadExport} disabled={!exportContent}>
-              Скачать файл
-            </button>
-          </div>
-
-          {exportStatus && (
-            <div className={`import-status ${exportStatus.type === 'error' ? 'error' : 'success'}`}>
-              {exportStatus.type === 'error' ? '❌' : '✅'} {exportStatus.message}
-            </div>
-          )}
-
-          <label className="form-group compact-group">
-            <span>Содержимое экспорта {exportFilename ? `(${exportFilename})` : ''}</span>
-            <textarea rows={16} value={exportContent} readOnly placeholder="Сначала выполните экспорт" />
-          </label>
-        </section>
+      {viewItem && !editItem && (
+        <ViewModal
+          entityType={selectedEntity}
+          item={viewItem}
+          onClose={() => setViewItem(null)}
+          onEdit={() => { setEditItem(viewItem); setViewItem(null); }}
+        />
+      )}
+      {editItem && (
+        <EditModal
+          entityType={selectedEntity}
+          item={editItem}
+          onClose={() => setEditItem(null)}
+          onSaved={() => { setEditItem(null); loadRows(selectedEntity, filters, page); }}
+        />
       )}
     </div>
   );

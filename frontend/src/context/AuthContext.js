@@ -34,10 +34,10 @@ export function AuthProvider({ children }) {
     restoreSession();
   }, []);
 
-  const login = async (email, password, role) => {
+  const login = async (email, password) => {
     const response = await apiFetch('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password, role }),
+      body: JSON.stringify({ email, password }),
     });
 
     saveAuth(response.token, response.user);

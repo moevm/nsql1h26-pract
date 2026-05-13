@@ -3,17 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const demoUsers = [
-  { role: 'student', email: 'student@example.com', password: 'student123', label: 'Студент' },
-  { role: 'company', email: 'company@example.com', password: 'company123', label: 'Компания' },
-  { role: 'admin', email: 'admin@example.com', password: 'admin123', label: 'Администратор' },
+  { email: 'student@example.com', password: 'student123', label: 'Студент' },
+  { email: 'company@example.com', password: 'company123', label: 'Компания' },
+  { email: 'admin@example.com', password: 'admin123', label: 'Администратор' },
 ];
 
 export default function Login() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    role: 'student',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
@@ -25,7 +21,7 @@ export default function Login() {
     setError('');
 
     try {
-      const user = await login(formData.email, formData.password, formData.role);
+      const user = await login(formData.email, formData.password);
       if (user.role === 'student') {
         navigate('/student');
       } else if (user.role === 'company') {
@@ -41,18 +37,11 @@ export default function Login() {
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const fillDemoUser = (demoUser) => {
-    setFormData({
-      email: demoUser.email,
-      password: demoUser.password,
-      role: demoUser.role,
-    });
+    setFormData({ email: demoUser.email, password: demoUser.password });
   };
 
   return (
@@ -84,15 +73,6 @@ export default function Login() {
             />
           </div>
 
-          <div className="form-group">
-            <label>Роль</label>
-            <select name="role" value={formData.role} onChange={handleChange}>
-              <option value="student">Студент</option>
-              <option value="company">Представитель компании</option>
-              <option value="admin">Администратор</option>
-            </select>
-          </div>
-
           {error && <div className="import-status error">❌ {error}</div>}
 
           <button type="submit" className="auth-btn" disabled={submitting}>
@@ -105,7 +85,7 @@ export default function Login() {
           <div className="skills" style={{ gap: 12 }}>
             {demoUsers.map((demoUser) => (
               <button
-                key={demoUser.role}
+                key={demoUser.email}
                 type="button"
                 className="details-btn"
                 onClick={() => fillDemoUser(demoUser)}
